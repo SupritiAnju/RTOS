@@ -1,0 +1,73 @@
+/*Signaling semaphore : An empty global string of size 20 should be added alphabets
+& numbers alternately in ascending order
+e.g. : “a1b2c3d4..”
+Write 2 tasks (one inserts alphabet, other inserts number) which add 1
+character at a time. Use signaling semaphore for synchronization
+ *
+ */
+#include"includes.h"
+#include"stm32f10x.h"
+
+#define STACK_SIZE 100
+
+OS_STK task_stkalpha[STACK_SIZE];
+OS_STK task_stkdig[STACK_SIZE];
+OS_EVENT *Sem;
+
+void Taskalpha(void *arg);
+void Taskdig(void *arg);
+INT8U str[20],pos=0;
+
+int main(void)
+{
+	INT8U ret;
+	Sem=OSSemCreate(1);
+	OSInit();
+	ret=OSTaskCreate(&Taskalpha,(void*)0,&task_stkalpha[STACK_SIZE -1],0);
+	if(ret!=OS_ERR_NONE)
+		printf("Taskalpha creation failed..\n\r");
+	ret=OSTaskCreate(&Taskdig,(void*)0,&task_stkdig[STACK_SIZE -1],1);
+		if(ret!=OS_ERR_NONE)
+			printf("Taskdig creation failed..\n\r");
+	OSStart();
+    while(1)
+    {
+    	printf("hello... \n\r");
+    }
+}
+
+void Taskalpha(void *arg)
+{
+	OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+	INT8U ch='a';
+	for(;;)
+	{
+		INT8U err,res;
+		OSSemPend(Sem,100,&err);
+		printf("in Taskalpha ..\n\r");
+		if(ch>='a'||ch<='z')
+		str[pos++]=ch++;
+		printf("The data is %s\n\r",str);
+		res=OSSemPost(Sem);
+		OSTimeDly(1*OS_TICKS_PER_SEC);
+
+	}
+}
+
+void Taskdig(void *arg)
+{
+	OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+	INT8U ch='1',err,res;
+	for(;;)
+	{
+		OSSemPend(Sem,100,&err);
+		printf("in Taskdig ..\n\r");
+			if(ch<='9')
+			str[pos++]=ch++;
+			printf("The data is %s",str);
+			res=OSSemPost(Sem);
+		OSTimeDly(0.1*OS_TICKS_PER_SEC);
+
+	}
+}
+

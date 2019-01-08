@@ -1,0 +1,58 @@
+/*Create 2 tasks which print msg(s) exactly 3 times and then quits
+(deletes self)
+ */
+#include"includes.h"
+#include"stm32f10x.h"
+
+#define STACK_SIZE 100
+
+OS_STK task_stk1[STACK_SIZE];
+OS_STK task_stk2[STACK_SIZE];
+
+void task1(void *arg);
+void task2(void *arg);
+
+int main(void)
+{
+	INT8U ret;
+	OSInit();
+	ret=OSTaskCreate(&task1,(void*)0,&task_stk1[STACK_SIZE -1],0);
+	if(ret!=OS_ERR_NONE)
+		printf("Task creation failed..\n\r");
+	ret=OSTaskCreate(&task2,(void*)0,&task_stk2[STACK_SIZE -1],1);
+	if(ret!=OS_ERR_NONE)
+			printf("Task2 creation failed..\n\r");
+	OSStart();
+    while(1)
+    {
+    	printf("hello... \n\r");
+    }
+}
+
+void task1(void *arg)
+{
+	INT8U i=0;
+	OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+
+	for(;;)
+	{
+		while(i<3)
+		{
+		printf("in task1 ..\n\r");
+		i++;
+		}
+		OSTaskDel(OS_PRIO_SELF);
+	}
+}
+void task2(void *arg)
+{
+	INT8U i;
+		//OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+
+		for(;;)
+		{
+			for(i=0;i<3;i++)
+			printf("in task2 ..\n\r");
+			OSTaskDel(OS_PRIO_SELF);
+		}
+}

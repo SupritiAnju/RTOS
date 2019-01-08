@@ -1,0 +1,79 @@
+/*One­shot tasks : Create 1 periodic task which creates 3 one­shot
+tasks of lower priorities. Add appropriate printf msg(s)
+ *
+ */
+#include"includes.h"
+#include"stm32f10x.h"
+
+#define STACK_SIZE 100
+
+OS_STK task_stk1[STACK_SIZE];
+OS_STK task_stk2[STACK_SIZE];
+OS_STK task_stk3[STACK_SIZE];
+OS_STK task_stk4[STACK_SIZE];
+
+void task1(void *arg);
+void task2(void *arg);
+void task3(void *arg);
+void task4(void *arg);
+
+int main(void)
+{
+	INT8U ret;
+	OSInit();
+	ret=OSTaskCreate(&task1,(void*)0,&task_stk1[STACK_SIZE -1],0);
+	if(ret!=OS_ERR_NONE)
+		printf("Task1 creation failed..\n\r");
+	OSStart();
+    while(1)
+    {
+    	printf("hello... \n\r");
+    }
+}
+
+void task1(void *arg)
+{
+	INT8U ret;
+	OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+	ret=OSTaskCreate(&task2,(void*)0,&task_stk2[STACK_SIZE -1],1);
+			if(ret!=OS_ERR_NONE)
+				printf("Task2 creation failed..\n\r");
+	ret=OSTaskCreate(&task3,(void*)0,&task_stk3[STACK_SIZE -1],2);
+			if(ret!=OS_ERR_NONE)
+				printf("Task3 creation failed..\n\r");
+	ret=OSTaskCreate(&task4,(void*)0,&task_stk4[STACK_SIZE -1],3);
+			if(ret!=OS_ERR_NONE)
+				printf("Task4 creation failed..\n\r");
+	for(;;)
+	{
+		printf("in task1 ..\n\r");
+		OSTimeDly(1*OS_TICKS_PER_SEC);
+	}
+}
+void task2(void *arg)
+{	for(;;)
+	{
+		printf("in task2 ..\n\r");
+		OSTaskDel(OS_PRIO_SELF);
+	}
+}
+void task3(void *arg)
+{
+
+	for(;;)
+	{
+		printf("in task3 ..\n\r");
+		OSTaskDel(OS_PRIO_SELF);
+	}
+}
+void task4(void *arg)
+{
+	for(;;)
+	{
+		printf("in task4 ..\n\r");
+		OSTaskDel(OS_PRIO_SELF);
+	}
+}
+
+
+

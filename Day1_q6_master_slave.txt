@@ -1,0 +1,74 @@
+
+/*Create 2 slave tasks which prints msg and suspends itself.
+Create a Master task which wakes them up at 500ms &
+700ms regularly
+ *
+ */
+#include"includes.h"
+#include"system_stm32f10x.h"
+
+#define STACK_SIZE 100
+
+OS_STK task_stkm[STACK_SIZE];
+OS_STK task_stks1[STACK_SIZE];
+OS_STK task_stks2[STACK_SIZE];
+
+void tasks1(void *arg);
+void tasks2(void *arg);
+void taskm(void *arg);
+
+int main(void)
+{
+	INT8U ret;
+	OSInit();
+	ret=OSTaskCreate(&taskm,(void*)0,&task_stkm[STACK_SIZE -1],2);
+	if(ret!=OS_ERR_NONE)
+		printf("Master Task creation failed..\n\r");
+	OSStart();
+    while(1)
+    {
+    	printf("hello... \n\r");
+    }
+}
+
+void taskm(void *arg)
+{
+	INT8U ret;
+	OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+	ret=OSTaskCreate(&tasks1,(void*)0,&task_stks1[STACK_SIZE -1],1);
+			if(ret!=OS_ERR_NONE)
+				printf("Slave Task1 creation failed..\n\r");
+	ret=OSTaskCreate(&tasks2,(void*)0,&task_stks2[STACK_SIZE -1],0);
+			if(ret!=OS_ERR_NONE)
+				printf("Slave Task2 creation failed..\n\r");
+
+	for(;;)
+	{
+		printf("in master task ..\n\r");
+		OSTimeDly(0.5*OS_TICKS_PER_SEC);
+		OSTaskResume(1);
+		printf("master resumed task1 ..\n\r");
+		OSTimeDly(0.7*OS_TICKS_PER_SEC);
+		OSTaskResume(0);
+		printf("master resumed task2 ..\n\r");
+	}
+}
+void tasks1(void *arg)
+{	for(;;)
+	{
+		printf("in slave task1 ..\n\r");
+		OSTaskSuspend(OS_PRIO_SELF);
+	}
+}
+void tasks2(void *arg)
+{
+
+	for(;;)
+	{
+		printf("in slave task2 ..\n\r");
+		OSTaskSuspend(OS_PRIO_SELF);
+	}
+}
+
+
+

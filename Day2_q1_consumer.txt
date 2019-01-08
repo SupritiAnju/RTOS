@@ -1,0 +1,84 @@
+/*Producer­Consumer : Create 2 producer tasks which add/write a value to a global
+variable and a Consumer task which prints the global variable periodically
+Use Critical Section APIs to protect/share the global resource
+ *
+ */
+#include"includes.h"
+#include"stm32f10x.h"
+
+#define STACK_SIZE 100
+INT32U value=0;
+
+OS_STK task_stkcon[STACK_SIZE];
+OS_STK task_stkpro1[STACK_SIZE];
+OS_STK task_stkpro2[STACK_SIZE];
+
+void taskcon(void *arg);
+void taskpro1(void *arg);
+void taskpro2(void *arg);
+int main(void)
+{
+	INT8U ret;
+
+	OSInit();
+	ret=OSTaskCreate(&taskcon,(void*)0,&task_stkcon[STACK_SIZE -1],0);
+	if(ret!=OS_ERR_NONE)
+		printf("Consumer Task creation failed..\n\r");
+	ret=OSTaskCreate(&taskpro1,(void*)0,&task_stkpro1[STACK_SIZE -1],1);
+		if(ret!=OS_ERR_NONE)
+			printf("ProducerTask1 creation failed..\n\r");
+		ret=OSTaskCreate(&taskpro2,(void*)0,&task_stkpro2[STACK_SIZE -1],2);
+			if(ret!=OS_ERR_NONE)
+				printf("Producer Task2 creation failed..\n\r");
+
+		OSStart();
+    while(1)
+    {
+    	printf("hello... \n\r");
+    }
+}
+
+void taskpro1(void *arg)
+{
+	//OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+	OS_CPU_SR cpu_sr;
+	for(;;)
+	{
+		printf("in producer task1 ..\n\r");
+		OS_ENTER_CRITICAL();
+		value=4;
+		OS_EXIT_CRITICAL();
+		OSTimeDly(1*OS_TICKS_PER_SEC);
+
+	}
+}
+
+void taskpro2(void *arg)
+{
+	//OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+	OS_CPU_SR cpu_sr;
+	for(;;)
+	{
+		printf("in producer task2 ..\n\r");
+		OS_ENTER_CRITICAL();
+		value=10;
+		OS_EXIT_CRITICAL();
+		OSTimeDly(1*OS_TICKS_PER_SEC);
+
+	}
+}
+
+void taskcon(void *arg)
+{
+	OS_CPU_SR cpu_sr;
+	OS_CPU_SysTickInit(SystemCoreClock/OS_TICKS_PER_SEC);
+	for(;;)
+	{
+		printf("in consumer task ..\n\r");
+		OS_ENTER_CRITICAL();
+		printf("value is %d\n\r",value);
+		OS_EXIT_CRITICAL();
+		OSTimeDly(0.2*OS_TICKS_PER_SEC);
+
+	}
+}
